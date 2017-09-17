@@ -72,9 +72,9 @@ var getSongs = function(request, response, next)
 	{
 		// random, by year
 		Winston.info("random songs");
-		getFolders(request.params.user, request.params.pass, function(err, folders)
+		getFolders(function(err, folders)
 		{
-			getRandomSongs(folders, request.params.user, request.params.pass, request.params.fromYear, request.params.toYear, request.params.size, function(err, songs)
+			getRandomSongs(folders, request.params.fromYear, request.params.toYear, request.params.size, function(err, songs)
 			{
 				response.send(songs);
 			});
@@ -84,15 +84,15 @@ var getSongs = function(request, response, next)
 	next();
 };
 
-var getFolders = function(user, pass, callback)
+var getFolders = function(callback)
 {
 	var options = JSON.parse(JSON.stringify(_httpOptions));
 	options.url = config.api.madsonic.location;
 	var client = Restify.createJSONClient(options);
 
 	var endpoint = '/rest2/getMusicFolders.view';
-	endpoint += '?v=2.5.0&c=work-pc-rest&f=json&u=' + user;
-	endpoint += '&p=' + pass;
+	endpoint += '?v=2.5.0&c=work-pc-rest&f=json&u=' + config.api.madsonic.user;
+	endpoint += '&p=' + config.api.madsonic.pass;
 
 	Winston.info("Calling API with url: " + endpoint);
 	client.get(endpoint, function(err, req, resp, object)
@@ -101,15 +101,15 @@ var getFolders = function(user, pass, callback)
 	});
 };
 
-var getRandomSongs = function(folders, user, pass, from, to, size, callback)
+var getRandomSongs = function(folders, from, to, size, callback)
 {
 	var options = JSON.parse(JSON.stringify(_httpOptions));
 	options.url = config.api.madsonic.location;
 	var client = Restify.createJSONClient(options);
 
 	var endpoint = '/rest2/getRandomSongs.view';
-	endpoint += '?v=2.5.0&c=work-pc-rest&f=json&u=' + user;
-	endpoint += '&p=' + pass;
+	endpoint += '?v=2.5.0&c=work-pc-rest&f=json&u=' + config.api.madsonic.user;
+	endpoint += '&p=' + config.api.madsonic.pass;
 
 	// by year?
 	if(from)
@@ -157,8 +157,8 @@ var searchSongs = function(request, response, next)
 	var client = Restify.createJSONClient(options);
 
 	var endpoint = '/rest2/searchID3.view';
-	endpoint += '?v=2.5.0&c=work-pc-rest&f=json&u=' + _user;
-	endpoint += '&p=' + _pass;
+	endpoint += '?v=2.5.0&c=work-pc-rest&f=json&u=' + config.api.madsonic.user;
+	endpoint += '&p=' + config.api.madsonic.pass;
 	endpoint += '&query=' + encodeURIComponent(searchQuery);
 
 	// make rest call
