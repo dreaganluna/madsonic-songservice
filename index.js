@@ -1,27 +1,3 @@
-// init vars
-var _httpOptions = {
-	headers: {
-		"Content-Type": "application/json"
-	},
-	retry: {
-	'retries': 0
-	},
-	agent: false
-};
-var _port = "1002";
-var _MadsonicAPILocation = "http://84.197.169.234:4041";
-
-// init requirements:
-var Async   = require('async');
-var Shuffle = require('shuffle-array');
-var Winston = require("./node_logging/logger.js")("madsonic-songservice");
-
-var _user = "admin";
-var _pass = "admin";
-
-// INIT Restify
-var Restify = require('restify');
-
 var init = function()
 {
 	// startup Restify server
@@ -36,9 +12,9 @@ var init = function()
 	server.get("/songs", getSongs);
 	server.get("/search", searchSongs);
 
-	server.listen(_port, serverUpHandler);
+	server.listen(config.port, serverUpHandler);
 
-	Winston.info("Server listening through port " + _port + ".");
+	Winston.info("Server listening through port " + config.port + ".");
 }
 
 var mainHandler = function(request, result, next)
@@ -56,7 +32,7 @@ var onUncaughtException = function(request, response, route, err)
 
 var serverUpHandler = function()
 {
-	Winston.log('info', 'Restify server up and running on port ' + _port);
+	Winston.log('info', 'Restify server up and running on port ' + config.port);
 };
 
 
@@ -96,9 +72,9 @@ var getSongs = function(request, response, next)
 	{
 		// random, by year
 		Winston.info("random songs");
-		getFolders(request.params.user, request.params.pass, function(err, folders)
+		getFolders(function(err, folders)
 		{
-			getRandomSongs(folders, request.params.user, request.params.pass, request.params.fromYear, request.params.toYear, request.params.size, function(err, songs)
+			getRandomSongs(folders, request.params.fromYear, request.params.toYear, request.params.size, function(err, songs)
 			{
 				response.send(songs);
 			});
@@ -108,15 +84,15 @@ var getSongs = function(request, response, next)
 	next();
 };
 
-var getFolders = function(user, pass, callback)
+var getFolders = function(callback)
 {
 	var options = JSON.parse(JSON.stringify(_httpOptions));
-	options.url = _MadsonicAPILocation;
+	options.url = config.api.madsonic.location;
 	var client = Restify.createJSONClient(options);
 
 	var endpoint = '/rest2/getMusicFolders.view';
-	endpoint += '?v=2.5.0&c=work-pc-rest&f=json&u=' + user;
-	endpoint += '&p=' + pass;
+	endpoint += '?v=2.5.0&c=work-pc-rest&f=json&u=' + config.api.madsonic.user;
+	endpoint += '&p=' + config.api.madsonic.pass;
 
 	Winston.info("Calling API with url: " + endpoint);
 	client.get(endpoint, function(err, req, resp, object)
@@ -125,15 +101,15 @@ var getFolders = function(user, pass, callback)
 	});
 };
 
-var getRandomSongs = function(folders, user, pass, from, to, size, callback)
+var getRandomSongs = function(folders, from, to, size, callback)
 {
 	var options = JSON.parse(JSON.stringify(_httpOptions));
-	options.url = _MadsonicAPILocation;
+	options.url = config.api.madsonic.location;
 	var client = Restify.createJSONClient(options);
 
 	var endpoint = '/rest2/getRandomSongs.view';
-	endpoint += '?v=2.5.0&c=work-pc-rest&f=json&u=' + user;
-	endpoint += '&p=' + pass;
+	endpoint += '?v=2.5.0&c=work-pc-rest&f=json&u=' + config.api.madsonic.user;
+	endpoint += '&p=' + config.api.madsonic.pass;
 
 	// by year?
 	if(from)
@@ -177,12 +153,12 @@ var searchSongs = function(request, response, next)
 
 	// prepare rest call
 	var options = JSON.parse(JSON.stringify(_httpOptions));
-	options.url = _MadsonicAPILocation;
+	options.url = config.api.madsonic.location;
 	var client = Restify.createJSONClient(options);
 
 	var endpoint = '/rest2/searchID3.view';
-	endpoint += '?v=2.5.0&c=work-pc-rest&f=json&u=' + _user;
-	endpoint += '&p=' + _pass;
+	endpoint += '?v=2.5.0&c=work-pc-rest&f=json&u=' + config.api.madsonic.user;
+	endpoint += '&p=' + config.api.madsonic.pass;
 	endpoint += '&query=' + encodeURIComponent(searchQuery);
 
 	// make rest call
@@ -211,5 +187,29 @@ var searchSongs = function(request, response, next)
 
 	next();
 };
+
+// init requirements:
+var Async   = require('async');
+var Shuffle = require('shuffle-array');
+var Restify = require('restify');
+var Winston = require("./node_logging/logger.js")("madsonic-songservice");
+
+// config
+var config = require('./config.json');
+Winston.info("Started with the following config:\n", JSON.stringify(config));
+
+// init vars
+var _httpOptions = {
+	headers: {
+		"Content-Type": "application/json"
+	},
+	retry: {
+	'retries': 0
+	},
+	agent: false
+};
+
+var _user = "admin";
+var _pass = "admin";
 
 init();
