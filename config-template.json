@@ -1,0 +1,10 @@
+{
+	"port": "",
+	"api": {
+		"madsonic": {
+			"location": "",
+			"user": "",
+			"pass": ""
+		}
+	}
+}

@@ -1,27 +1,3 @@
-// init vars
-var _httpOptions = {
-	headers: {
-		"Content-Type": "application/json"
-	},
-	retry: {
-	'retries': 0
-	},
-	agent: false
-};
-var _port = "1002";
-var _MadsonicAPILocation = "http://84.197.169.234:4041";
-
-// init requirements:
-var Async   = require('async');
-var Shuffle = require('shuffle-array');
-var Winston = require("./node_logging/logger.js")("madsonic-songservice");
-
-var _user = "admin";
-var _pass = "admin";
-
-// INIT Restify
-var Restify = require('restify');
-
 var init = function()
 {
 	// startup Restify server
@@ -36,9 +12,9 @@ var init = function()
 	server.get("/songs", getSongs);
 	server.get("/search", searchSongs);
 
-	server.listen(_port, serverUpHandler);
+	server.listen(config.port, serverUpHandler);
 
-	Winston.info("Server listening through port " + _port + ".");
+	Winston.info("Server listening through port " + config.port + ".");
 }
 
 var mainHandler = function(request, result, next)
@@ -56,7 +32,7 @@ var onUncaughtException = function(request, response, route, err)
 
 var serverUpHandler = function()
 {
-	Winston.log('info', 'Restify server up and running on port ' + _port);
+	Winston.log('info', 'Restify server up and running on port ' + config.port);
 };
 
 
@@ -111,7 +87,7 @@ var getSongs = function(request, response, next)
 var getFolders = function(user, pass, callback)
 {
 	var options = JSON.parse(JSON.stringify(_httpOptions));
-	options.url = _MadsonicAPILocation;
+	options.url = config.api.madsonic.location;
 	var client = Restify.createJSONClient(options);
 
 	var endpoint = '/rest2/getMusicFolders.view';
@@ -128,7 +104,7 @@ var getFolders = function(user, pass, callback)
 var getRandomSongs = function(folders, user, pass, from, to, size, callback)
 {
 	var options = JSON.parse(JSON.stringify(_httpOptions));
-	options.url = _MadsonicAPILocation;
+	options.url = config.api.madsonic.location;
 	var client = Restify.createJSONClient(options);
 
 	var endpoint = '/rest2/getRandomSongs.view';
@@ -177,7 +153,7 @@ var searchSongs = function(request, response, next)
 
 	// prepare rest call
 	var options = JSON.parse(JSON.stringify(_httpOptions));
-	options.url = _MadsonicAPILocation;
+	options.url = config.api.madsonic.location;
 	var client = Restify.createJSONClient(options);
 
 	var endpoint = '/rest2/searchID3.view';
@@ -211,5 +187,29 @@ var searchSongs = function(request, response, next)
 
 	next();
 };
+
+// init requirements:
+var Async   = require('async');
+var Shuffle = require('shuffle-array');
+var Restify = require('restify');
+var Winston = require("./node_logging/logger.js")("madsonic-songservice");
+
+// config
+var config = require('./config.json');
+Winston.info("Started with the following config:\n", JSON.stringify(config));
+
+// init vars
+var _httpOptions = {
+	headers: {
+		"Content-Type": "application/json"
+	},
+	retry: {
+	'retries': 0
+	},
+	agent: false
+};
+
+var _user = "admin";
+var _pass = "admin";
 
 init();
